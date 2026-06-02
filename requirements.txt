@@ -1,0 +1,8 @@
+fastapi
+mcp<2
+langchain<2
+langchain-mcp-adapters<1
+langchain-openai<2
+langgraph<2
+langfuse<5
+python-dotenv

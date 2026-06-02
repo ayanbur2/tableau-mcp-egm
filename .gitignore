@@ -1,0 +1,15 @@
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+.venv/*
+.logs/*
+*.pyc
+dashboard_app_demo.py
+env.list
+node_modules/
+tableau-mcp-experimental/node_modules/
+__pycache__/
+*.log
