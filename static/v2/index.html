@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Tableau AI · Studio</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="/static/v2/style.css?v=20261125-shortcuts-en">
+  <link id="themeOverride" rel="stylesheet" href="/static/gateway/theme.css" disabled>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+  <script src="/static/tableau.extensions.1.latest.min.js"></script>
+</head>
+<body>
+  <div class="fx-orb fx-orb-a" aria-hidden="true"></div>
+  <div class="fx-orb fx-orb-b" aria-hidden="true"></div>
+  <div class="fx-grid" aria-hidden="true"></div>
+
+  <div class="container">
+    <div class="app-shell" id="appShell">
+      <nav class="rail" aria-label="Primary">
+        <div class="rail-brand" title="Tableau AI Studio">T</div>
+        <button class="rail-btn active" type="button" data-page="workspace" title="Workspace">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5L12 4l8 6.5V20a1 1 0 01-1 1h-5v-6H10v6H5a1 1 0 01-1-1v-9.5z"/></svg>
+        </button>
+        <button class="rail-btn" type="button" data-page="shortcuts" title="Shortcuts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L4 14h7l-1 8 10-14h-7l1-6z"/></svg>
+        </button>
+        <button class="rail-btn" type="button" data-page="tools" title="Tools">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.7 6.3a4 4 0 01-1.4 6.5l-6.5 6.5-3-3 6.5-6.5a4 4 0 016.5-1.4l2.1-2.1 2.1 2.1-2.1 2.1z"/></svg>
+        </button>
+        <button class="rail-btn" type="button" data-page="docs" title="MCP Docs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h10l4 4v12H5V4z"/><path d="M15 4v4h4M8 11h8M8 15h8M8 19h5"/></svg>
+        </button>
+        <div class="rail-spacer"></div>
+        <div class="rail-live" title="Live">
+          <span class="status-dot"></span>
+        </div>
+      </nav>
+
+      <div class="side-backdrop" id="sideBackdrop" hidden></div>
+
+      <aside class="history-panel" id="sidePages">
+        <!-- Workspace -->
+        <section class="side-page active" data-page="workspace" id="page-workspace">
+          <div class="page-heading">
+            <h2>Workspace</h2>
+            <p>Datasource + conversations</p>
+          </div>
+          <div class="panel-block site-switcher-block">
+            <div class="ds-picker-header">
+              <h3>Tableau site</h3>
+            </div>
+            <p class="ds-picker-hint">Cloud and Server stay available — pick which site Studio talks to.</p>
+            <label class="profile-switch site-switch-main">
+              <span class="connection-key">Site</span>
+              <select id="tableauSiteSelect" title="Switch Tableau Cloud / Server"></select>
+            </label>
+          </div>
+          <div class="panel-block ds-picker" id="dsPicker">
+            <div class="ds-picker-header">
+              <h3>Datasource</h3>
+              <button id="dsRefreshBtn" class="ds-refresh-btn" type="button" title="Refresh datasources">↻</button>
+            </div>
+            <p class="ds-picker-hint">Select first — chat, tools, and data apps follow this source.</p>
+            <div class="ds-combobox">
+              <input id="dsSearch" class="ds-search" type="search" placeholder="Search datasources…" autocomplete="off" />
+              <div id="dsDropdown" class="ds-dropdown" hidden></div>
+            </div>
+            <div id="dsSelected" class="ds-selected" aria-live="polite"></div>
+          </div>
+
+          <div class="panel-block history-block grow">
+            <div class="history-header">
+              <h3>Conversations</h3>
+              <div class="history-actions">
+                <button id="deleteChatBtn" class="new-chat-btn danger" title="Delete current chat">Delete</button>
+                <button id="newChatBtn" class="new-chat-btn" title="Start a new chat">+ New</button>
+              </div>
+            </div>
+            <div id="historyList" class="history-list"></div>
+          </div>
+
+          <div class="connection-footer" id="mcpInfoBar">
+            <div class="connection-section-label">Tableau</div>
+            <div class="connection-row">
+              <span class="connection-key">Server</span>
+              <span class="connection-value" id="mcpServerInfo">Checking…</span>
+            </div>
+            <div class="connection-row">
+              <span class="connection-key">Site</span>
+              <span class="connection-value" id="mcpSiteInfo">Checking…</span>
+            </div>
+            <div class="connection-divider"></div>
+            <div class="connection-section-label">Model</div>
+            <div class="llm-chip" id="llmChip" title="Active chat model">
+              <span class="llm-provider" id="mcpLlmProvider">…</span>
+              <span class="llm-model" id="mcpLlmModel">Checking…</span>
+            </div>
+            <label class="profile-switch">
+              <span class="connection-key">Profile</span>
+              <select id="llmProfileSelect" title="Switch LLM profile"></select>
+            </label>
+          </div>
+        </section>
+
+        <!-- Shortcuts -->
+        <section class="side-page" data-page="shortcuts" id="page-shortcuts" hidden>
+          <div class="page-heading">
+            <h2>Shortcuts</h2>
+            <p>One-click workflows · fills chat on the right</p>
+          </div>
+          <div class="panel-block shortcuts-panel grow">
+            <div class="tools-panel-header">
+              <h3>By purpose</h3>
+              <span class="tools-count">click to run</span>
+            </div>
+            <div id="sidebarShortcuts" class="sidebar-shortcuts roomy"></div>
+          </div>
+        </section>
+
+        <!-- Tools -->
+        <section class="side-page" data-page="tools" id="page-tools" hidden>
+          <div class="page-heading">
+            <h2>Tools</h2>
+            <p>MCP + local tools · click to draft a prompt</p>
+          </div>
+          <div class="panel-block tools-panel grow">
+            <div class="tools-panel-header">
+              <h3>Catalog</h3>
+              <span id="toolsCount" class="tools-count">…</span>
+            </div>
+            <input id="toolsSearch" class="tools-search" type="search" placeholder="Search tools…" autocomplete="off">
+            <div id="toolsList" class="tools-list roomy"></div>
+          </div>
+        </section>
+
+        <!-- MCP Docs -->
+        <section class="side-page" data-page="docs" id="page-docs" hidden>
+          <div class="page-heading">
+            <h2>MCP Docs</h2>
+            <p>How this Studio talks to Tableau</p>
+          </div>
+          <div class="docs-scroll">
+            <article class="docs-card">
+              <h3>What is this?</h3>
+              <p>
+                This app is a chat UI over <strong>Tableau MCP</strong> plus local data-app tools.
+                You pick a published datasource, then the agent calls MCP tools
+                (<code>query-datasource</code>, <code>list-workbooks</code>, <code>publish-workbook</code>, etc.
+              </p>
+            </article>
+            <article class="docs-card">
+              <h3>Datasource-first</h3>
+              <p>
+                Always select a datasource in <em>Workspace</em> first. Chat injects
+                <code>[Active Datasource | datasourceLuid=…]</code> so every tool stays on that LUID.
+              </p>
+            </article>
+            <article class="docs-card">
+              <h3>Data apps (JS artifacts)</h3>
+              <p>
+                Prefer <code>local_generate_data_app</code>: invents fresh <code>src/app.js</code> + CSS,
+                scaffolds, wires sqlproxy, writes preview, packages <code>.twbx</code>.
+                Publish only when you ask via MCP <code>publish-workbook</code>.
+              </p>
+              <ul>
+                <li>Preview: <code>/preview/&lt;name&gt;?v=…</code></li>
+                <li>Theme: <code>red | green | blue</code> in the brief</li>
+                <li>Samples projectId for publish is pre-filled in shortcuts</li>
+              </ul>
+            </article>
+            <article class="docs-card">
+              <h3>Official references</h3>
+              <ul class="docs-links">
+                <li><a href="https://github.com/tableau/tableau-mcp" target="_blank" rel="noopener">tableau/tableau-mcp</a></li>
+                <li><a href="https://tableau.github.io/tableau-mcp/docs/intro" target="_blank" rel="noopener">Tableau MCP Docs</a></li>
+                <li><a href="https://help.tableau.com/" target="_blank" rel="noopener">Tableau Help</a></li>
+              </ul>
+            </article>
+            <article class="docs-card">
+              <div class="docs-card-head">
+                <h3>Live tool index</h3>
+                <span id="docsToolsCount" class="tools-count">…</span>
+              </div>
+              <p class="docs-muted">Loaded from <code>GET /tools</code> on this server.</p>
+              <div id="docsToolsCatalog" class="docs-tools-catalog"></div>
+            </article>
+          </div>
+        </section>
+      </aside>
+
+      <div class="main-panel">
+        <header>
+          <div class="header-inner">
+            <div class="logo-wrap" aria-hidden="true">
+              <div class="analytics-glyph">✦</div>
+            </div>
+            <div>
+              <h1 id="studioTitle">Tableau AI Studio</h1>
+              <p id="pageContextLabel">Workspace · chat stays here</p>
+            </div>
+            <div class="status-pill">
+              <span class="status-title" id="studioStatusTitle">Studio v2</span>
+              <span id="currentDate" class="status-date"></span>
+              <script>document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-GB', {day:'numeric', month:'long', year:'numeric'});</script>
+              <div class="status-live-row">
+                <span class="status-dot"></span>
+                <span>Live</span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="chat-box" id="chatBox">
+          <div class="welcome-screen" id="welcomeScreen">
+            <div class="welcome-icon">✦</div>
+            <h2>Start with a datasource</h2>
+            <p>Use the left rail: Workspace → Shortcuts / Tools / Docs. Chat always stays on the right.</p>
+            <div class="welcome-shortcuts" id="welcomeShortcuts"></div>
+          </div>
+        </div>
+
+        <div class="suggestions-bar">
+          <div class="suggestions-inner" id="shortcutBar"></div>
+        </div>
+
+        <div class="input-area">
+          <div class="input-row">
+            <textarea id="messageInput" rows="1" placeholder="Select a datasource on the left first…" disabled></textarea>
+            <button onclick="sendMessage()" id="sendBtn" title="Send (Enter)">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+          <p class="hint">Enter to send · Shift+Enter new line</p>
+        </div>
+      </div>
+
+      <aside class="progress-panel" id="progressPanel" aria-label="Run progress">
+        <div class="progress-header">
+          <div>
+            <h2>Progress</h2>
+            <p id="progressMeta">Grouped by each question</p>
+          </div>
+          <button type="button" class="progress-close" id="progressCloseBtn" title="Collapse">✕</button>
+        </div>
+        <div class="progress-body" id="progressSteps">
+          <div class="progress-empty" id="progressEmpty">
+            Send a message to see each question’s tools and prompts grouped here.
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <button type="button" class="progress-fab" id="progressOpenBtn" title="Show Progress" hidden>Progress</button>
+  <script src="/static/script.js?v=20261125-data-app-skills"></script>
+  <script src="/static/v2/nav.js?v=20261125-data-app-skills"></script>
+</body>
+</html>

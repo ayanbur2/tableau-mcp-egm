@@ -13,26 +13,32 @@
 </head>
 <body>
 
-  <!-- Tableau logo watermark -->
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"
     style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:460px;height:460px;opacity:.06;pointer-events:none;z-index:0;">
-    <!-- horizontal bar (centre) -->
     <rect x="85" y="0"   width="30" height="200" fill="white"/>
-    <!-- vertical bar (centre) -->
     <rect x="0"  y="85"  width="200" height="30" fill="white"/>
-    <!-- top-left square -->
     <rect x="10" y="10"  width="58" height="58" fill="white"/>
-    <!-- top-right square -->
     <rect x="132" y="10" width="58" height="58" fill="white"/>
-    <!-- bottom-left square -->
     <rect x="10" y="132" width="58" height="58" fill="white"/>
-    <!-- bottom-right square -->
     <rect x="132" y="132" width="58" height="58" fill="white"/>
   </svg>
 
   <div class="container">
     <div class="app-shell">
       <aside class="history-panel">
+        <div class="ds-picker" id="dsPicker">
+          <div class="ds-picker-header">
+            <h3>Datasource</h3>
+            <button id="dsRefreshBtn" class="ds-refresh-btn" type="button" title="Refresh datasources">↻</button>
+          </div>
+          <p class="ds-picker-hint">Select first — all chat, tools, and data apps use this datasource.</p>
+          <div class="ds-combobox">
+            <input id="dsSearch" class="ds-search" type="search" placeholder="Search datasources…" autocomplete="off" />
+            <div id="dsDropdown" class="ds-dropdown" hidden></div>
+          </div>
+          <div id="dsSelected" class="ds-selected" aria-live="polite"></div>
+        </div>
+
         <div class="history-header">
           <h3>Conversations</h3>
           <div class="history-actions">
@@ -41,6 +47,24 @@
           </div>
         </div>
         <div id="historyList" class="history-list"></div>
+
+        <div class="shortcuts-panel">
+          <div class="tools-panel-header">
+            <h3>Shortcuts</h3>
+            <span class="tools-count">by purpose</span>
+          </div>
+          <div id="sidebarShortcuts" class="sidebar-shortcuts"></div>
+        </div>
+
+        <div class="tools-panel">
+          <div class="tools-panel-header">
+            <h3>Tools</h3>
+            <span id="toolsCount" class="tools-count">…</span>
+          </div>
+          <input id="toolsSearch" class="tools-search" type="search" placeholder="Search tools…" autocomplete="off">
+          <div id="toolsList" class="tools-list"></div>
+        </div>
+
         <div class="connection-footer" id="mcpInfoBar">
           <div class="connection-row">
             <span class="connection-key">Server</span>
@@ -63,7 +87,7 @@
             </div>
             <div>
               <h1>Tableau AI Assistant</h1>
-              <p>Powered by Tableau MCP</p>
+              <p>Powered by Tableau MCP · full tool surface · <a href="/v2" style="color:#3151d4;font-weight:600;text-decoration:none;">open Studio v2</a></p>
             </div>
             <div class="status-pill">
               <span class="status-title">Tableau EMEA Growth Solution Engineering</span>
@@ -79,34 +103,21 @@
         <div class="chat-box" id="chatBox">
           <div class="welcome-screen" id="welcomeScreen">
             <div class="welcome-icon">📊</div>
-            <h2>Ask anything about your data</h2>
-            <p>Query your Tableau datasources, surface insights, and render charts automatically.</p>
+            <h2>Start with a datasource</h2>
+            <p>Pick a published datasource in the left search. Chat, shortcuts, and MCP tools then run against that selection.</p>
+            <div class="welcome-shortcuts" id="welcomeShortcuts"></div>
           </div>
         </div>
 
-        <!-- Persistent suggestions bar — always visible -->
         <div class="suggestions-bar">
-          <div class="suggestions-inner">
-            <div class="sug-row">
-              <span class="sug-label"><span class="sug-icon">✦</span>Try asking</span>
-              <button class="chip" onclick="useChip(this)"
-                data-prompt="Use the Superstore dataset. Show total Sales by month as a line chart.">Monthly sales trend</button>
-              <button class="chip" onclick="useChip(this)"
-                data-prompt="Use the Superstore dataset. Show monthly Sales as a multi-series line chart broken down by Category.">Sales by category over time</button>
-              <button class="chip" onclick="useChip(this)"
-                data-prompt="Use the Superstore dataset. Show top 10 States by Sales as a bar chart.">Top states by revenue</button>
-            </div>
-            <div class="sug-row">
-              <span class="sug-label"><span class="sug-icon">⚙</span>MCP</span>
-              <button class="chip tool" onclick="useChip(this)"
-                data-prompt="Use your list_tools MCP function and list every available tool by name with a one-line description. Then list all accessible datasources.">List MCP tools &amp; datasources</button>
-            </div>
+          <div class="suggestions-inner" id="shortcutBar">
+            <!-- filled by script.js -->
           </div>
         </div>
 
         <div class="input-area">
           <div class="input-row">
-            <textarea id="messageInput" rows="1" placeholder="Ask a question about your data…"></textarea>
+            <textarea id="messageInput" rows="1" placeholder="Select a datasource on the left first…" disabled></textarea>
             <button onclick="sendMessage()" id="sendBtn" title="Send (Enter)">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -115,7 +126,7 @@
               </svg>
             </button>
           </div>
-          <p class="hint">Enter to send &middot; Shift+Enter for new line</p>
+          <p class="hint">Enter to send · Shift+Enter new line · click a tool to draft a prompt</p>
         </div>
       </div>
     </div>

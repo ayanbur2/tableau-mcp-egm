@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sales by Month — local preview</title>
+    <style>
+      :root {
+        --ink: #1a1a1a;
+        --muted: #5c6570;
+        --line: #1f77b4;
+        --bg: #f7f8fa;
+        --panel: #ffffff;
+        --border: #e2e6eb;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 500px at 10% -10%, #dceaf7 0%, transparent 55%),
+          radial-gradient(900px 400px at 100% 0%, #eef3f8 0%, transparent 50%),
+          var(--bg);
+        min-height: 100vh;
+      }
+      .shell {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 3rem;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #0b5cab;
+        background: #e8f2fc;
+        border: 1px solid #c5daf0;
+        padding: 0.25rem 0.55rem;
+        border-radius: 4px;
+        margin-bottom: 0.75rem;
+      }
+      h1 {
+        margin: 0 0 0.35rem;
+        font-size: 1.75rem;
+        font-weight: 650;
+      }
+      .sub {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 0.95rem;
+        line-height: 1.45;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1.25rem 1.25rem 1rem;
+        box-shadow: 0 8px 24px rgba(20, 40, 70, 0.06);
+      }
+      #app { min-height: 360px; }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        margin-top: 0.75rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+      .meta strong { color: var(--ink); font-weight: 600; }
+      .axis-note {
+        margin: 0.5rem 0 0;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      svg { display: block; }
+      .dot { fill: var(--line); }
+      .grid line { stroke: #edf0f3; stroke-width: 1; }
+      .label { fill: var(--muted); font-size: 11px; font-family: inherit; }
+      .y-label { fill: var(--muted); font-size: 11px; font-family: inherit; }
+      .tip {
+        margin-top: 1.25rem;
+        padding: 0.85rem 1rem;
+        background: #fff8e8;
+        border: 1px solid #f0e0b0;
+        border-radius: 8px;
+        color: #5a4a1a;
+        font-size: 0.875rem;
+        line-height: 1.45;
+      }
+      .tip code {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 0.8em;
+        background: rgba(0,0,0,0.05);
+        padding: 0.1em 0.35em;
+        border-radius: 3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="badge">Local preview · mock Superstore data</div>
+      <h1>Sales by Month</h1>
+      <p class="sub">
+        Browser preview of the Tableau data app chart. In Tableau Cloud this same UI
+        queries the live <strong>Sample - Superstore</strong> datasource via Extensions.
+      </p>
+      <div class="panel">
+        <div id="app"></div>
+        <div class="meta">
+          <span>Datasource: <strong>Sample - Superstore</strong></span>
+          <span>Metric: <strong>SUM(Sales)</strong> by month</span>
+          <span>Mode: <strong>preview</strong></span>
+        </div>
+      </div>
+      <p class="tip">
+        Live published view:
+        <a href="https://10ax.online.tableau.com/#/site/burak1002/views/SalesbyMonth_17955233969890/sheets/SalesbyMonth" target="_blank" rel="noopener">
+          Sales by Month on Tableau Cloud
+        </a>
+        · Source package:
+        <code>data_apps/Sales by Month/</code>
+      </p>
+    </div>
+    <script>
+      (function () {
+        'use strict';
+        var root = document.getElementById('app');
+
+        // Representative Superstore monthly totals (USD) for local preview only.
+        var SAMPLE = [
+          { 'Order Date': '2022-01-01', Sales: 142301 },
+          { 'Order Date': '2022-02-01', Sales: 118764 },
+          { 'Order Date': '2022-03-01', Sales: 186420 },
+          { 'Order Date': '2022-04-01', Sales: 164812 },
+          { 'Order Date': '2022-05-01', Sales: 201155 },
+          { 'Order Date': '2022-06-01', Sales: 178903 },
+          { 'Order Date': '2022-07-01', Sales: 192447 },
+          { 'Order Date': '2022-08-01', Sales: 210338 },
+          { 'Order Date': '2022-09-01', Sales: 246901 },
+          { 'Order Date': '2022-10-01', Sales: 228674 },
+          { 'Order Date': '2022-11-01', Sales: 312580 },
+          { 'Order Date': '2022-12-01', Sales: 298441 }
+        ];
+
+        function monthKey(value) {
+          var d = new Date(value);
+          if (!isNaN(d.getTime())) {
+            var m = String(d.getUTCMonth() + 1).padStart(2, '0');
+            return d.getUTCFullYear() + '-' + m;
+          }
+          return String(value);
+        }
+
+        function formatMoney(n) {
+          return '$' + Math.round(n).toLocaleString('en-US');
+        }
+
+        function renderLineChart(rows) {
+          root.textContent = '';
+          var title = document.createElement('h2');
+          title.style.margin = '0 0 0.75rem';
+          title.style.fontSize = '1.1rem';
+          title.textContent = 'Total Sales by Month';
+          root.appendChild(title);
+
+          var points = rows.map(function (r) {
+            return { x: monthKey(r['Order Date']), y: Number(r.Sales) || 0 };
+          }).sort(function (a, b) { return a.x < b.x ? -1 : 1; });
+
+          var maxY = Math.max.apply(null, points.map(function (p) { return p.y; }).concat([1]));
+          var width = 860;
+          var height = 340;
+          var padL = 56;
+          var padR = 24;
+          var padT = 16;
+          var padB = 44;
+
+          var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+          svg.setAttribute('width', '100%');
+          svg.setAttribute('height', String(height));
+
+          var grid = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          grid.setAttribute('class', 'grid');
+          for (var g = 0; g <= 4; g++) {
+            var gy = padT + ((height - padT - padB) * g) / 4;
+            var gl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            gl.setAttribute('x1', String(padL));
+            gl.setAttribute('x2', String(width - padR));
+            gl.setAttribute('y1', String(gy));
+            gl.setAttribute('y2', String(gy));
+            grid.appendChild(gl);
+
+            var yVal = maxY * (1 - g / 4);
+            var yl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yl.setAttribute('class', 'y-label');
+            yl.setAttribute('x', String(padL - 8));
+            yl.setAttribute('y', String(gy + 4));
+            yl.setAttribute('text-anchor', 'end');
+            yl.textContent = formatMoney(yVal);
+            svg.appendChild(yl);
+          }
+          svg.appendChild(grid);
+
+          var coords = points.map(function (p, i) {
+            var x = padL + (i * (width - padL - padR)) / Math.max(points.length - 1, 1);
+            var y = height - padB - (p.y / maxY) * (height - padT - padB);
+            return { x: x, y: y, label: p.x, value: p.y };
+          });
+
+          var path = coords.map(function (c, i) {
+            return (i === 0 ? 'M' : 'L') + c.x + ' ' + c.y;
+          }).join(' ');
+
+          var area = path +
+            ' L' + coords[coords.length - 1].x + ' ' + (height - padB) +
+            ' L' + coords[0].x + ' ' + (height - padB) + ' Z';
+          var fill = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          fill.setAttribute('d', area);
+          fill.setAttribute('fill', 'rgba(31,119,180,0.12)');
+          fill.setAttribute('stroke', 'none');
+          svg.appendChild(fill);
+
+          var line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          line.setAttribute('d', path);
+          line.setAttribute('fill', 'none');
+          line.setAttribute('stroke', '#1f77b4');
+          line.setAttribute('stroke-width', '2.5');
+          line.setAttribute('stroke-linejoin', 'round');
+          svg.appendChild(line);
+
+          coords.forEach(function (c, i) {
+            var circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('class', 'dot');
+            circle.setAttribute('cx', String(c.x));
+            circle.setAttribute('cy', String(c.y));
+            circle.setAttribute('r', '3.5');
+            circle.setAttribute('title', c.label + ': ' + formatMoney(c.value));
+            svg.appendChild(circle);
+
+            if (i % 2 === 0 || i === coords.length - 1) {
+              var xl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+              xl.setAttribute('class', 'label');
+              xl.setAttribute('x', String(c.x));
+              xl.setAttribute('y', String(height - 16));
+              xl.setAttribute('text-anchor', 'middle');
+              xl.textContent = c.label.slice(2);
+              svg.appendChild(xl);
+            }
+          });
+
+          root.appendChild(svg);
+
+          var note = document.createElement('p');
+          note.className = 'axis-note';
+          note.textContent = points.length + ' months · preview data (not live Tableau query)';
+          root.appendChild(note);
+        }
+
+        renderLineChart(SAMPLE);
+      })();
+    </script>
+  </body>
+</html>
